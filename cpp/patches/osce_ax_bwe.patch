@@ -1,0 +1,49 @@
+diff --git a/dnn/osce.c b/dnn/osce.c
+index 4e838f3..5ffa333 100644
+--- a/dnn/osce.c
++++ b/dnn/osce.c
+@@ -32,6 +32,9 @@
+ 
+ #include <math.h>
+ #include "osce.h"
++#ifdef USE_AX_BWE
++#include "ax_bwe.h"
++#endif
+ #include "osce_features.h"
+ #include "os_support.h"
+ #include "nndsp.h"
+@@ -861,6 +864,25 @@ static void bbwe_feature_net(
+     int arch
+ )
+ {
++#ifdef USE_AX_BWE
++    int i_frame;
++    (void)hBBWENET;
++    (void)arch;
++    for (i_frame = 0; i_frame < num_frames; i_frame++)
++    {
++        if (ax_bwe_cond(output + i_frame * 2 * BBWENET_FNET_GRU_STATE_SIZE,
++                        features + i_frame * BBWENET_FEATURE_DIM,
++                        state->feature_net_conv1_state,
++                        state->feature_net_conv2_state,
++                        state->feature_net_gru_state) != 0)
++        {
++            /* fall back to silence on NPU failure */
++            OPUS_CLEAR(output + i_frame * 2 * BBWENET_FNET_GRU_STATE_SIZE,
++                       2 * BBWENET_FNET_GRU_STATE_SIZE);
++        }
++    }
++#else
++
+     float input_buffer[4 * BBWENET_FNET_GRU_STATE_SIZE];
+     float output_buffer[4 * BBWENET_FNET_GRU_STATE_SIZE];
+     int i_subframe;
+@@ -952,6 +974,8 @@ static void bbwe_feature_net(
+         OPUS_COPY(output + i_subframe * BBWENET_FNET_GRU_STATE_SIZE, state->feature_net_gru_state, BBWENET_FNET_GRU_STATE_SIZE);
+     }
+ }
++#endif
++}
+ 
+ static float hq_2x_even[3] = {0.026641845703125, 0.228668212890625, -0.4036407470703125};
+ static float hq_2x_odd[3]  = {0.104583740234375, 0.3932037353515625, -0.152496337890625};

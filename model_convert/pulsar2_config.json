@@ -1,0 +1,96 @@
+{
+  "input": "/ai_data/AX615/hy/workspace/AudioSR/OpusBWE/export/bwe_feature_net_t1.onnx",
+  "output_dir": "/ai_data/AX615/hy/workspace/AudioSR/OpusBWE/export/compile_t1",
+  "output_name": "bwe_feature_net.axmodel",
+  "work_dir": "/ai_data/AX615/hy/workspace/AudioSR/OpusBWE/export/work_t1",
+  "model_type": "ONNX",
+  "target_hardware": "AX650",
+  "npu_mode": "NPU1",
+  "input_shapes": "features:1x1x114;conv1_state:1x114x2;conv2_state:1x128x2;gru_state:1x1x128",
+  "onnx_opt": {
+    "disable_onnx_optimization": false,
+    "enable_onnxsim": false,
+    "model_check": true
+  },
+  "quant": {
+    "calibration_method": "MinMax",
+    "input_configs": [
+      {
+        "tensor_name": "features",
+        "calibration_dataset": "/ai_data/AX615/hy/workspace/AudioSR/OpusBWE/export/calib_t1/features.tar.gz",
+        "calibration_format": "Numpy",
+        "calibration_size": 200,
+        "calibration_mean": [],
+        "calibration_std": []
+      },
+      {
+        "tensor_name": "conv1_state",
+        "calibration_dataset": "/ai_data/AX615/hy/workspace/AudioSR/OpusBWE/export/calib_t1/conv1_state.tar.gz",
+        "calibration_format": "Numpy",
+        "calibration_size": 200,
+        "calibration_mean": [],
+        "calibration_std": []
+      },
+      {
+        "tensor_name": "conv2_state",
+        "calibration_dataset": "/ai_data/AX615/hy/workspace/AudioSR/OpusBWE/export/calib_t1/conv2_state.tar.gz",
+        "calibration_format": "Numpy",
+        "calibration_size": 200,
+        "calibration_mean": [],
+        "calibration_std": []
+      },
+      {
+        "tensor_name": "gru_state",
+        "calibration_dataset": "/ai_data/AX615/hy/workspace/AudioSR/OpusBWE/export/calib_t1/gru_state.tar.gz",
+        "calibration_format": "Numpy",
+        "calibration_size": 200,
+        "calibration_mean": [],
+        "calibration_std": []
+      }
+    ],
+    "layer_configs": [
+      {
+        "start_tensor_names": [
+          "DEFAULT"
+        ],
+        "end_tensor_names": [
+          "DEFAULT"
+        ],
+        "data_type": "U16",
+        "weight_data_type": "S8",
+        "output_data_type": "U16"
+      }
+    ],
+    "highest_mix_precision": false,
+    "precision_analysis": false
+  },
+  "input_processors": [
+    {
+      "tensor_name": "features",
+      "tensor_layout": "NCHW",
+      "src_dtype": "FP32",
+      "src_layout": "NCHW"
+    },
+    {
+      "tensor_name": "conv1_state",
+      "tensor_layout": "NCHW",
+      "src_dtype": "FP32",
+      "src_layout": "NCHW"
+    },
+    {
+      "tensor_name": "conv2_state",
+      "tensor_layout": "NCHW",
+      "src_dtype": "FP32",
+      "src_layout": "NCHW"
+    },
+    {
+      "tensor_name": "gru_state",
+      "tensor_layout": "NCHW",
+      "src_dtype": "FP32",
+      "src_layout": "NCHW"
+    }
+  ],
+  "compiler": {
+    "check": 0
+  }
+}
