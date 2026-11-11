@@ -1,17 +1,18 @@
 # OpusBWE.AXERA
 
-**AX650 上的 16 kHz → 48 kHz 带宽扩展（Opus OSCE-BWE）。C++ 全链路 RTF 0.099（约 10× 实时）；axmodel 288 KB + C++ 可执行文件 2.3 MB，即取即用。**
+**AX650 上的 16 kHz → 48 kHz 音频超分 / 带宽扩展（Opus OSCE-BWE）。轻量、真流式：axmodel 288 KB + C++ 可执行 2.3 MB，逐 20 ms 帧因果推理，C++ 全链路 RTF 0.099（约 10× 实时）。**
 
-![RTF](https://img.shields.io/badge/RTF%200.099-10x%20realtime-brightgreen) ![Size](https://img.shields.io/badge/axmodel-288%20KB-green) ![License](https://img.shields.io/badge/license-Apache--2.0-blue) ![HuggingFace](https://img.shields.io/badge/%F0%9F%A4%97-OpusBWE.AXERA-yellow)
+![RTF](https://img.shields.io/badge/RTF-0.099%20%2810x%20realtime%29-brightgreen) ![Size](https://img.shields.io/badge/axmodel-288%20KB-green) ![Lightweight](https://img.shields.io/badge/lightweight-0.37M%20params-blue) ![Streaming](https://img.shields.io/badge/streaming-causal%20%7C%2020%20ms-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-blue) ![HuggingFace](https://img.shields.io/badge/%F0%9F%A4%97-OpusBWE.AXERA-yellow)
 
 - HuggingFace: https://huggingface.co/HY-2012/opusBWE.AXERA
 - GitHub: https://github.com/ZY-2012/opusBWE.AXERA
 - 上游: https://github.com/xiph/opus
 
-> **说明**：上游 Opus 是完整编解码器（SILK/CELT/DRED/OSCE/LACE…），本仓库只抽取其中的
-> **OSCE-BWE 带宽扩展**链路（`dnn/bwe_demo.c` / `osce_bwe()`）：16 kHz PCM 输入，
-> 48 kHz PCM 输出。神经网络部分（feature net）量化后跑在 AX650 NPU 上，自适应滤波
-> 合成留在 host（C，复用上游 Opus DSP）。
+> **AX650 板端实测说明**：AudioSR、LavaSR、FlowHigh、FastWave、OpusBWE 均已在 AX650N 板端跑通。
+>
+> **对比入口**
+> GitHub: [LavaSR](https://github.com/ZY-2012/LavaSR.AXERA) · [AudioSR](https://github.com/ZY-2012/AudioSR.AXERA) · [FlowHigh](https://github.com/ZY-2012/FlowHigh.AXERA) · [FastWave](https://github.com/ZY-2012/FastWave.AXERA)
+> HuggingFace: [LavaSR](https://huggingface.co/HY-2012/LavaSR.AXERA) · [AudioSR](https://huggingface.co/HY-2012/AudioSR.AXERA) · [FlowHigh](https://huggingface.co/HY-2012/FlowHigh.AXERA) · [FastWave](https://huggingface.co/HY-2012/FastWave.AXERA)
 
 ## 目录
 
@@ -53,26 +54,16 @@ AX650（BSP V3.10.2），20 ms 一帧（320 → 960 点）：
 
 | 链路 | RTF |
 |---|---:|
-| C++（NPU feature net + 上游 Opus DSP） | **0.099** |
-| Python 封装（同上，subprocess 调用） | ≈ 0.10 |
-
-- feature net（conv1/conv2/GRU/tconv）：288 KB axmodel，**1 次调用 / 10 ms 帧**；
-- 自适应滤波（af1/af2/af3）、TDShaper、SILK 上采样：上游 Opus C DSP（BSD）。
+| C++（NPU + Opus DSP） | **0.099** |
+| Python 封装（同上） | ≈ 0.10 |
 
 ## 模型转换
 
 ```bash
-# 1) 下载上游权重（opus_data 包内 dnn/models/bbwenet_v2.pth）
-#    https://media.xiph.org/opus/models/opus_data-a5177ec6fb7d15058e99e57029746100121f68e4890b1467d4094aa336b6013e.tar.gz
-# 2) 导出 feature net（流式，1 帧/次）
 python model_convert/export_feature_net.py --frames 1 --out export/bwe_feature_net_t1.onnx
-# 3) 真实特征标定（必须用真实特征，随机噪声会裁波）
-python model_convert/make_calib.py <wavs...>
-# 4) Pulsar2 8.0 编译
+python model_convert/make_calib.py samples/listen/16k/*.wav
 pulsar2 build --config model_convert/pulsar2_config.json
 ```
-
-量化：U16 激活 / S8 权重 / U16 输出，MinMax，真实特征标定。
 
 ## 数据来源
 
