@@ -2,24 +2,32 @@
 
 AX650 C++ runtime for the Opus OSCE-BWE bandwidth extension (16 kHz → 48 kHz).
 The neural feature net (conv1 / conv2 / GRU / transposed conv) runs on the NPU
-through `axmodel`; the adaptive filtering / shaping / upsampling uses the
+through the axmodel; the adaptive filtering / shaping / upsampling uses the
 upstream Opus C DSP (BSD-3-Clause), unchanged apart from one hook.
-
-## Layout
-
-```
-src-equivalent: bwe_ax650.c   harness (wav 16k in -> wav 48k out)
-                ax_bwe.c/.h   AX_ENGINE wrapper for the feature net (1 frame / call)
-patches/osce_ax_bwe.patch     hook that replaces bbwe_feature_net() with the NPU call
-build_ax650.sh                cross-compile script
-```
 
 ## Build
 
 ```bash
-export TOOLCHAIN_ROOT=/path/to/gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu
-export BSP_MSP_DIR=/path/to/ax650n_bsp_sdk/msp/out
-export OPUS_SRC=/path/to/opus            # pinned commit 0145a6248c2171bb6c4e03fb54fe016b5123e37e
+bash cpp/download_toolchains.sh     # Arm GNU 9.2 + AX650 BSP + Opus source + BWE weights (~1.3 GB, once)
+bash cpp/build_ax650.sh             # -> bin/bwe_ax650
+```
+
+`download_toolchains.sh` fetches:
+
+| 依赖 | 来源 | 大小 |
+|---|---|---|
+| Arm GNU 9.2 aarch64 交叉编译器 | developer.arm.com | ~500 MB |
+| AX650 BSP SDK（ax_engine/ax_sys） | github.com/AXERA-TECH/ax650n_bsp_sdk | ~620 MB |
+| Opus 源码（pin `0145a624`） | github.com/xiph/opus | ~30 MB |
+| OSCE-BWE 权重（`dnn/bbwenet_data.c`） | media.xiph.org `opus_data` | ~130 MB |
+
+`build_ax650.sh` calls `download_toolchains.sh` automatically if anything is missing.
+Already have the dependencies? Override the paths:
+
+```bash
+TOOLCHAIN_ROOT=/path/to/gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu \
+BSP_MSP_DIR=/path/to/ax650n_bsp_sdk/msp/out \
+OPUS_SRC=/path/to/opus \
 bash cpp/build_ax650.sh
 ```
 

@@ -57,6 +57,15 @@ AX650（BSP V3.10.2），20 ms 一帧（320 → 960 点）：
 | C++（NPU + Opus DSP） | **0.099** |
 | Python 封装（同上） | ≈ 0.10 |
 
+## 从源码编译（C++）
+
+```bash
+bash cpp/download_toolchains.sh   # Arm GNU 9.2 + AX650 BSP + Opus 源码 + BWE 权重（约 1.3 GB，仅一次）
+bash cpp/build_ax650.sh           # -> bin/bwe_ax650
+```
+
+`build_ax650.sh` 在缺少工具链/BSP/源码时会自动调用 `download_toolchains.sh`。
+
 ## 模型转换
 
 ```bash

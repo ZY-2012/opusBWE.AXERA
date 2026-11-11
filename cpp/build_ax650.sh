@@ -16,16 +16,25 @@ BSP_MSP_DIR="${BSP_MSP_DIR:-$ROOT/cpp/toolchains/ax650n_bsp_sdk/msp/out}"
 OPUS_SRC="${OPUS_SRC:-$ROOT/origin/opus}"
 BUILD="$ROOT/cpp/build"
 
-if [[ ! -f "$OPUS_SRC/dnn/osce.c" ]]; then
-  echo "ERROR: Opus source not found: $OPUS_SRC (clone https://github.com/xiph/opus)" >&2
-  exit 2
+# auto-fetch toolchain / BSP / Opus source / weights when they are missing
+if [[ ! -x "$TOOLCHAIN_ROOT/bin/aarch64-none-linux-gnu-gcc" || \
+      ! -f "$BSP_MSP_DIR/include/ax_engine_api.h" || \
+      ! -f "$OPUS_SRC/dnn/osce.c" || \
+      ! -f "$OPUS_SRC/dnn/bbwenet_data.c" ]]; then
+  echo "== toolchain / BSP / Opus source missing, running cpp/download_toolchains.sh"
+  bash "$CPP_DIR/download_toolchains.sh"
 fi
+
 if [[ ! -x "$TOOLCHAIN_ROOT/bin/aarch64-none-linux-gnu-gcc" ]]; then
   echo "ERROR: toolchain not found: $TOOLCHAIN_ROOT" >&2
   exit 2
 fi
 if [[ ! -f "$BSP_MSP_DIR/include/ax_engine_api.h" ]]; then
   echo "ERROR: AX650 BSP not found: $BSP_MSP_DIR" >&2
+  exit 2
+fi
+if [[ ! -f "$OPUS_SRC/dnn/osce.c" ]]; then
+  echo "ERROR: Opus source not found: $OPUS_SRC" >&2
   exit 2
 fi
 
@@ -49,6 +58,7 @@ cmake -S "$OPUS_SRC" -B "$BUILD" \
   -DCMAKE_C_FLAGS="-DUSE_AX_BWE -I$CPP_DIR"
 cmake --build "$BUILD" --target opus -j"$(nproc)"
 
+mkdir -p "$ROOT/bin"
 CC="$TOOLCHAIN_ROOT/bin/aarch64-none-linux-gnu-gcc"
 $CC -O3 -mcpu=cortex-a55 -DUSE_AX_BWE -DENABLE_OSCE -DENABLE_OSCE_BWE \
   -I "$OPUS_SRC/include" -I "$OPUS_SRC/dnn" -I "$OPUS_SRC/silk" -I "$OPUS_SRC/celt" \
